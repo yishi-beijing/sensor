@@ -1,0 +1,4 @@
+<launch>
+    <rosparam file="$(find lbas_cam)/config/camera_1.yaml" command="load" ns="camera_1"/>
+    <node pkg="lbas_cam" type="lbas_cam_node" name="camera_1" respawn="true" output="screen" /> 
+</launch>

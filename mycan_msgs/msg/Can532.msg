@@ -1,0 +1,6 @@
+uint8 chassissteerensta
+uint8 chassissteerslopover
+uint8 chassissteermodefb
+uint16 chassissteeranglefb
+uint16 chassissteeranglerearfb
+uint8 chassissteeranglespeedfb

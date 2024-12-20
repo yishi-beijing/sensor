@@ -1,0 +1,5 @@
+uint8 faultdiagnosis
+uint8 epstorquefb
+uint16 epsanglefb
+uint16 bty_systemfault
+uint8 mcu_systemfault

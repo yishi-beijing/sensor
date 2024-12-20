@@ -1,0 +1,8 @@
+uint8 chassisbmsreserved
+uint8 chassispowerchargesta
+uint8 chassispowerchargesocksta
+uint8 chassispowersocfb
+uint16 chassispowervoltfb
+uint16 chassispowercurrfb
+uint8 chassisbmsmaxtemp
+uint8 chassisbmsreserved1

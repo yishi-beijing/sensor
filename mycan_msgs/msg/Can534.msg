@@ -1,0 +1,9 @@
+uint8 drivingmodefb
+uint8 chassispowerstafb
+uint8 chassispowerdcsta
+uint8 chassisspeedlimitedmodefb
+uint16 chassisspeedlimitedvalfb
+uint8 chassislowpowervoltsta
+uint8 chassisestopstafb
+uint8 crashfrontsta
+uint8 crashrearsta

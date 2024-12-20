@@ -1,0 +1,2 @@
+uint32 vehicleodo
+uint32 vehicletrip

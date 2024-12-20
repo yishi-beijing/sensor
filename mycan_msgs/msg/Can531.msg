@@ -1,0 +1,5 @@
+uint8 chassisbrakeensta
+uint8 vehiclebrakelampfb
+uint8 chassisepbfb
+uint16 chassisbrakepedalvalfb
+uint8 chassisbrakepressurefb

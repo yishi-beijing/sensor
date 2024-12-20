@@ -1,0 +1,5 @@
+uint8 leftfronttirepressure
+uint8 rightfronttirepressure
+uint8 rightreartirepressure
+uint8 leftreartirepressure
+uint8 waterlevelratio

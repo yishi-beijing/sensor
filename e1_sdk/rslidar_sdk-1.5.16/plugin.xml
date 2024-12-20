@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<library path="rslidar_sdk">
+  <class name="robosense::lidar::NodeManager" type="robosense::lidar::NodeManager" base_class_type="rclcpp::Node">
+    <description>rslidar_sdk component</description>
+  </class>
+</library>

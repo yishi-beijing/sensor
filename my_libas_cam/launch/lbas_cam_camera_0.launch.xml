@@ -1,0 +1,11 @@
+<launch>
+    <!-- Params -->
+    <arg name="input_image"/>
+    <arg name="container_name"/>
+
+    <include file="$(find-pkg-share common_sensor_launch)/launch/camera_node_container.launch.py">
+        <arg name="input_image" value="$(var input_image)"/>
+        <arg name="container_name" value="$(var container_name)"/>
+    </include>
+
+</launch>

@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find lbas_cam)/launch/lbas_cam_camera_0.launch" />
+    <include file="$(find lbas_cam)/launch/lbas_cam_camera_1.launch" />
+</launch>

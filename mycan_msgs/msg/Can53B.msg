@@ -1,0 +1,2 @@
+uint8 can_timeoutfb
+uint16 vehicletrip

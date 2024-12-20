@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>rslidar_sdk</name>
+  <version>1.5.16</version>
+  <description>The rslidar_sdk package</description>
+  <maintainer email="felix.huang@robosense.cn">robosense</maintainer>
+  <license>BSD</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>libpcap</depend>
+  <depend>rclcpp</depend>
+  <depend>rslidar_msg</depend>
+  <depend>sensor_msgs</depend>
+  <depend>rclcpp_components</depend>
+  <depend>std_msgs</depend>
+  <depend>yaml-cpp</depend>
+
+  <export>
+     <build_type>ament_cmake</build_type>
+  </export>
+</package>
