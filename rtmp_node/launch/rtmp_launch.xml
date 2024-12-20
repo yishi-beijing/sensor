@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  
+ 
+  <node pkg="rtmp_node" exec="rtmp_node" name="rtmp_node" output="both">
+   </node>
+
+</launch>
+
