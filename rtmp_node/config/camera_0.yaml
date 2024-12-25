@@ -1,0 +1,55 @@
+my_libas_cam:
+  ros__parameters:
+    DeviceUserID: camera_0
+    DeviceSerialNumber: 'DA2942350'
+    CamType: 0          # mono 0 和 Color 0  需要手动配置
+
+    # Camera pixel formats:
+    # Mono8, Mono10, Mono12, RGB8packed, BGR8packed, YUV422packed, YUV422_YUYV_packed,
+    # BayerRG8, BayerRG10, BayerRG10packed, BayerRG12, BayerRG12packed
+    # BayerBG8, BayerBG10, BayerBG10packed, BayerBG12, BayerBG12packed
+    # BayerGR8, BayerGR10, BayerGR10packed, BayerGR12, BayerGR12packed
+    # BayerGB8, BayerGB10, BayerGB10packed, BayerGB12, BayerGB12packed
+    PixelFormat: BayerRG8
+    # Ros supported encodings:
+    # rgb8, rgba8, rgb16, rgba16, bgr8, bgra8, bgr16,bgra16, mono8, mono16,
+    # bayer_rggb8, bayer_bggr8, bayer_gbrg8, bayer_grbg8, bayer_rggb16, bayer_bggr16,
+    # bayer_gbrg16, bayer_grbg16, yuv422
+    RosEncoding: rgb8
+    # Camera parameters
+    # true 1 和 false 0
+    Width: 1920                     #图像宽度
+    Height: 1200                    #图像高度 #2200
+    OffsetX: 0                      #X方向偏置
+    OffsetY: 0                    #Y方向偏置
+    AcquisitionFrameRateEnable: true   #使能 
+    AcquisitionFrameRate: 26.0        #帧率
+    BurstFrameCount: 10
+    ExposureAuto: 0
+    ExposureUpperLimit: 20000
+    ExposureLowerLimit: 15
+    ExposureTime: 24000.0
+    GammaEnable: false
+    Gamma: 0.7
+    GainAuto: 2
+    Gain: 0.0
+    DigitalShiftEnable: false
+    DigitalShift: 0.5
+    TriggerMode: 0 # 0: off, 1: on
+    TriggerSource: 2 # 7: Software, 0: Line 0, 2: Line 2, 4: Counter 0, 9: Action 1, 13: Anyway
+    TriggerActivation: 0 # 0: RisingEdge, 1: FallingEdge, 2: LevelHigh, 3: LevelLow
+    TriggerDelay: 0.0
+    LineSelector: 1 # 0: Line 0, 1: Line 1, 2: Line 2
+    LineDebouncerTime: 50
+
+    # Binning
+    BinningSelector: 0 # Region0
+    BinningHorizontal: 1 # 1, 2 or 4
+    BinningVertical: 1 # 1, 2 or 4
+
+    SaturationEnable: false
+    Saturation: 128
+    BalanceWhiteAuto: 0
+    BalanceRatio_R: 1120
+    BalanceRatio_G: 1024
+    BalanceRatio_B: 1876
