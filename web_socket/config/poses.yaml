@@ -1,0 +1,25 @@
+poses:
+  - pose_1:
+      position_x: 66358.2890625
+      position_y: 42480.4765625
+      position_z: 0.0
+      orientation_x: 0.0
+      orientation_y: 0.0
+      orientation_z: 0.04496333854008627
+      orientation_w: 0.9989886376667803
+  - pose_2:
+      position_x: 66273.9453125
+      position_y: 42482.62890625
+      position_z: 0.0
+      orientation_x: 0.0
+      orientation_y: 0.0
+      orientation_z: 0.9996679511530251
+      orientation_w: -0.02576795369277417
+returnPoint:
+  position_x: 1.0
+  position_y: 1.0
+  position_z: 1.0
+  orientation_x: 0.0
+  orientation_y: 0.0
+  orientation_z: 1.0
+  orientation_w: 1.0

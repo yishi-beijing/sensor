@@ -13,6 +13,7 @@ find_package(mycan_msgs REQUIRED)
 find_package(tier4_planning_msgs REQUIRED)
 find_package(autoware_adapi_v1_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(yaml-cpp REQUIRED)
 include_directories(${mycan_msgs_INCLUDE_DIRS})
 
 
@@ -23,7 +24,8 @@ add_executable(web_socket_node src/web_socket.cpp)
 ament_target_dependencies(web_socket_node rclcpp Boost websocketpp std_msgs  mycan_msgs sensor_msgs tier4_planning_msgs geometry_msgs autoware_adapi_v1_msgs)
 
 # 指定链接库
-target_link_libraries(web_socket_node ${Boost_LIBRARIES} OpenSSL::SSL OpenSSL::Crypto  /lib/x86_64-linux-gnu/libproj.so)
+target_link_libraries(web_socket_node ${Boost_LIBRARIES} OpenSSL::SSL OpenSSL::Crypto )
+target_link_libraries(web_socket_node yaml-cpp )
 install(TARGETS
   web_socket_node
   DESTINATION lib/${PROJECT_NAME}

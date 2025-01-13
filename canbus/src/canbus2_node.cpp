@@ -1476,7 +1476,7 @@ int main(int argc, char** argv)
 
 	
 
-	can_init();
+	//can_init();
 
     canbus_write_msg_init();
 
@@ -1509,9 +1509,9 @@ int main(int argc, char** argv)
   
    	pthread_t recv1_threadid,recv2_threadid,send_threadid,topic_threadid,hw_msg_threadid;
     canbus_write_msg_init();
-    pthread_create(&recv1_threadid,NULL,recv1_func,&m_run0);	
-    pthread_create(&recv2_threadid,NULL,recv2_func,&m_run0);	
-    pthread_create(&send_threadid,NULL,send_func,&m_run0);
+   // pthread_create(&recv1_threadid,NULL,recv1_func,&m_run0);	
+    //pthread_create(&recv2_threadid,NULL,recv2_func,&m_run0);	
+    //pthread_create(&send_threadid,NULL,send_func,&m_run0);
     pthread_create(&topic_threadid,NULL,topic_func,&m_run0);
    	pthread_create(&hw_msg_threadid,NULL,hw_msg_func,&m_run0);
    	printf(">>this is hello !\r\n");//指示程序已运行

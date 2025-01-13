@@ -13,6 +13,8 @@
 #include <map>
 #include <string>
 #include <proj.h>
+#include <yaml-cpp/yaml.h>
+
 
 using namespace std;
 namespace beast = boost::beast;   // from <boost/beast.hpp>
@@ -28,6 +30,7 @@ const double a = 6378245.0;
 const double ee = 0.00669342162296594323;
 double wgLat=41.768628;
 double wgLon=123.435442;
+
 static bool outOfChina(double lat, double lon)
 {
     if (lon < 72.004 || lon > 137.8347)
@@ -95,12 +98,19 @@ public:
           shutdown_requested_(false)
     {
 
+       //    wss://www.ykcel.com/websocket/car/LCFCHBHE1P1010046  @吕东忱 
 
-        connect_to_server("39.106.60.229", "8090");
+        std::string host,port;   
+        this->declare_parameter("host", "39.106.60.229");
+        this->get_parameter("host", host);
+        this->declare_parameter("port", "8088");
+        this->get_parameter("port", port);
+        connect_to_server(host, port);
+
 
         read_thread_ = std::thread([this]() { read_loop(); });
 
-        // Use a separate thread to run the io_context
+        // // Use a separate thread to run the io_context
         io_context_thread_ = std::thread([this]() { io_context_.run(); });
 
         publisher_ = this->create_publisher<std_msgs::msg::String>("ws_out", 10);
@@ -109,19 +119,18 @@ public:
         hw_mode_publisher_ = this->create_publisher<std_msgs::msg::Int32>("hw_mode_state", 10);
         planning_goal_publisher_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/planning/mission_planning/goal", 10);
     
-        websocket_init();
+       
         subscription_ = this->create_subscription<std_msgs::msg::String>(
         "ws_in", 10, std::bind(&WebSocketNode::send_data, this, std::placeholders::_1));
         ws_subscription_ = this->create_subscription<std_msgs::msg::String>(
         "ws_out", 10, std::bind(&WebSocketNode::read_data, this, std::placeholders::_1));
         hwcan_subscription_ = this->create_subscription<mycan_msgs::msg::Hwcan>(
         "hw_can_msgs", 10, std::bind(&WebSocketNode::ws_hw_msg_data, this, std::placeholders::_1));
-
         sub_gps_cmd = this->create_subscription<sensor_msgs::msg::NavSatFix>(
         "/sensing/gnss/ublox/nav_sat_fix", 10, std::bind(&WebSocketNode::gps_callback, this, std::placeholders::_1));
         autoware_mode_cmd = this->create_subscription<tier4_planning_msgs::msg::RouteState>(
         "/planning/mission_planning/route_selector/main/state", 10, std::bind(&WebSocketNode::autoware_mode, this, std::placeholders::_1));
-         
+        websocket_init();
     }
 
     ~WebSocketNode() {
@@ -175,6 +184,9 @@ private:
          }else{
             driving_mode=3;
          }
+         //小程序测试
+         driving_mode=1;
+         
          int expectedRemainingDrivingTime=0;
 
         snprintf(msg_data, sizeof(msg_data),
@@ -444,7 +456,9 @@ private:
         }
         std::cout<<"over"<<std::endl;
     }
-    void taskReq_func(nlohmann::json & json) 
+   
+
+ void taskReq_func(nlohmann::json & json) 
    {
         //std::string route = json["data"]["route"];
         //std::string returnPoint = json["data"]["returnPoint"];
@@ -454,6 +468,7 @@ private:
         int code=0;
         long int serialNumber = json["serialNumber"];
         int taskId = json["data"]["taskId"];
+        std::string route = json["data"]["route"];
         geometry_msgs::msg::PoseStamped pose;
         char time[48];
         std::string message=" ok";
@@ -462,73 +477,19 @@ private:
         std_msgs::msg::Int32 work_data;
 
 
-
-        pose.header.frame_id="map";
-        pose.pose.position.x=66184.8125;
-        pose.pose.position.y=42488.48046875;
-        pose.pose.position.z=-22.86244894798966;
-        pose.pose.orientation.x=0.0;
-        pose.pose.orientation.y=0.0;
-        pose.pose.orientation.z=0.9999526122415109;
-        pose.pose.orientation.w=-0.009735156463997655;
-        planning_goal_publisher_->publish(pose);
-        sleep(1);
-        //auto node = rclcpp::Node::make_shared("service_client1_node");  // 确保 node 被正确声明和初始化
-        //auto client = node->create_client<autoware_adapi_v1_msgs::srv::ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
-
-    
-            if (!client->service_is_ready()) {
-                 return;
-            }
-
-           auto request = std::make_shared<autoware_adapi_v1_msgs::srv::ChangeOperationMode::Request>();
-                
-           auto future_result = client->async_send_request(request);
-
-            if (rclcpp::spin_until_future_complete(node, future_result) == rclcpp::FutureReturnCode::SUCCESS) {
-                    RCLCPP_INFO(node->get_logger(), "Service call succeeded.");
-                 code=1;
-            } else {
-                    RCLCPP_ERROR(node->get_logger(), "Service call failed.");
-                    
-            }
-        get_time(time);
-        snprintf(msg_data, sizeof(msg_data),
-                "{ \"type\": \"taskStartResp\", \"data\" :{ \"serialNumber\":\"%ld\",\"taskId\": \"%d\",\"startTime\": \"%s\",\"code\": \"%d\",\"message\": \"%s\"} }",
-        serialNumber,
-        taskId,
-        time,
-        code,
-        message.c_str());
-        printf("pub :%s\n", msg_data);
-        auto taskStartResp = std_msgs::msg::String();
-        taskStartResp.data = msg_data;  // 将C字符串赋值给消息的data成员
-        ws_publisher_->publish(taskStartResp);
-        sleep(2);
-        while(this->autoware_mode_msg!=6)
-        {
-        
-            if (this->hw_msg.can540.vehiclectrlmodefb==3)
-            {
-                return;
-            }
-            sleep(1);
-        }
-
-
         //kaishirenwu
         work_data.data=1;
         hw_work_publisher_->publish(work_data);
         sleep(3);
 
         pose.header.frame_id="map";
-        pose.pose.position.x=66240.9453125;
-        pose.pose.position.y=42482.81640625;
-        pose.pose.position.z=-21.40816867786336;
-        pose.pose.orientation.x=0.0;
-        pose.pose.orientation.y=0.0;
-        pose.pose.orientation.z=0.9996679511530251;
-        pose.pose.orientation.w=-0.02576795369277417;
+        pose.pose.position.x=poses_map[route].position.x;
+        pose.pose.position.y=poses_map[route].position.y;
+        pose.pose.position.z=poses_map[route].position.z;
+        pose.pose.orientation.x=poses_map[route].orientation.x;
+        pose.pose.orientation.y=poses_map[route].orientation.y;
+        pose.pose.orientation.z=poses_map[route].orientation.z;
+        pose.pose.orientation.w=poses_map[route].orientation.w;
         planning_goal_publisher_->publish(pose);
         sleep(3);
     
@@ -537,9 +498,9 @@ private:
                  return;
             }
 
-             request = std::make_shared<autoware_adapi_v1_msgs::srv::ChangeOperationMode::Request>();
+            auto request = std::make_shared<autoware_adapi_v1_msgs::srv::ChangeOperationMode::Request>();
                
-             future_result = client->async_send_request(request);
+            auto future_result = client->async_send_request(request);
 
             if (rclcpp::spin_until_future_complete(node, future_result) == rclcpp::FutureReturnCode::SUCCESS) {
                     message="Service call succeeded.";
@@ -563,46 +524,6 @@ private:
 
         work_data.data=2;
         hw_work_publisher_->publish(work_data);
-        pose.header.frame_id="map";
-        pose.pose.position.x=66184.8125;
-        pose.pose.position.y=42488.48046875;
-        pose.pose.position.z=-22.86244894798966;
-        pose.pose.orientation.x=0.0;
-        pose.pose.orientation.y=0.0;
-        pose.pose.orientation.z=0.9999526122415109;
-        pose.pose.orientation.w=-0.009735156463997655;
-        planning_goal_publisher_->publish(pose);
-        sleep(2);
-        //auto node = rclcpp::Node::make_shared("service_client1_node");  // 确保 node 被正确声明和初始化
-        //auto client = node->create_client<autoware_adapi_v1_msgs::srv::ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
-
-    
-            if (!client->service_is_ready()) {
-                 return;
-            }
-
-           request = std::make_shared<autoware_adapi_v1_msgs::srv::ChangeOperationMode::Request>();
-               
-           future_result = client->async_send_request(request);
-
-            if (rclcpp::spin_until_future_complete(node, future_result) == rclcpp::FutureReturnCode::SUCCESS) {
-                    RCLCPP_INFO(node->get_logger(), "Service call succeeded.");
-                 code=1;
-            } else {
-                    RCLCPP_ERROR(node->get_logger(), "Service call failed.");
-                    
-            }
-
-        sleep(3);
-        while(this->autoware_mode_msg!=1)
-        {
-        
-            if (this->hw_msg.can540.vehiclectrlmodefb==3)
-            {
-                return;
-            }
-            sleep(1);
-        }
         get_time(time);
         snprintf(msg_data, sizeof(msg_data),
                 "{ \"type\": \"taskEndResp\", \"data\" :{ \"serialNumber\":\"%ld\",\"taskId\": \"%d\",\"endTime\": \"%s\",\"code\": \"%d\",\"message\": \"%s\",\"area\": \"1221.22\",\"powerConsumption\": \"1223.22\"} }",
@@ -617,6 +538,8 @@ private:
         ws_publisher_->publish(taskEndResp);
  
    }
+
+
     void gps_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
     {
     sensor_msgs::msg::NavSatFix gps=*msg;
@@ -626,17 +549,32 @@ private:
     // std::cout<<wgLon<<std::endl;
     }
 
-
+private:
     void connect_to_server(const std::string& host, const std::string& port) 
     {
+
+
+       // std::string host = "example.com";  // 替换为你选择的 WebSocket 服务器地址
+       // std::string port = "80";           // 或者 "443" 如果你使用的是 WebSocket over HTTPS
+      
         tcp::resolver resolver(io_context_);
-        auto const results = resolver.resolve(host, port);
+        auto const results = resolver.resolve(host.c_str(), port.c_str());
         net::connect(ws_.next_layer(), results.begin(), results.end());
-        ws_.handshake(host, "/websocket/LCFCHBHE1P1010046");
+        std::cout<<"host  :  "<<host.c_str() <<"  port  ： "<<port.c_str()<<std::endl;
+        try {
+
+            //    wss://www.ykcel.com/websocket/car/LCFCHBHE1P1010046
+            ws_.handshake(host.c_str(), "/websocket/car/LCFCHBHE1P1010046");
+        } catch (const boost::system::system_error& e) {
+            std::cerr << "Error during handshake: " << e.what() << std::endl;
+            std::cerr << "Error Code: " << e.code() << std::endl;
+        }
+
     }
 
     void read_loop() {
         rclcpp::WallRate loop_rate(5);
+        std::cout<<"read_loop  :  "<<std::endl;
         while (rclcpp::ok()) {
             beast::flat_buffer buffer;
             try {
@@ -645,16 +583,20 @@ private:
                 }
                 std_msgs::msg::String msg;
                 msg.data = beast::buffers_to_string(buffer.data());
+                 std::cout<<"buffer  :  "<<msg.data.c_str()<<std::endl;
                 publisher_->publish(msg);
             } catch (const std::exception& e) {
                 RCLCPP_ERROR(this->get_logger(), "Read error: %s", e.what());
+                std::cout<<"error   e"<<e.what()<<std::endl;
             }
+            std::cout<<"sleep  :  "<<std::endl;
            loop_rate.sleep();
 
         }
     }
 
     void send_data(const std_msgs::msg::String::SharedPtr msg) {
+       // std::cout<<"send_data"<<std::endl;
         std::lock_guard<std::mutex> lock(ws_mutex);
         ws_.async_write(net::buffer(msg->data),
             [this](beast::error_code ec, std::size_t /*bytes_transferred*/) {
@@ -666,25 +608,73 @@ private:
     
     void websocket_init()
     {
-        char msg_data[256];
-        snprintf(msg_data, sizeof(msg_data),
-                "{ \"type\": \"uploadReturnPoint\", \"data\" : [{\"returnPoint\":\"%s\",\"returnPointName\":\"%s\"}]}",
-        "1",
-        "返回点");
-        printf("%s\n", msg_data);
-        auto uploadReturnPoint = std_msgs::msg::String();
-        uploadReturnPoint.data = msg_data;  // 将C字符串赋值给消息的data成员
-        ws_publisher_->publish(uploadReturnPoint);
-        sleep(2);
-        memset(msg_data,0,256);
-        snprintf(msg_data, sizeof(msg_data),
-                "{ \"type\": \"uploadRoute\", \"data\" : [{\"route\":\"%s\",\"routeName\":\"%s\"}]}",
-        "99",
-        "路线1");
-        printf("%s\n", msg_data);
+
+        char msg_data[1024]; 
+        char temp_data[256];
+        std::string yaml_file_path;
+        this->declare_parameter("yaml_config", "default_value.yaml");
+        this->get_parameter("yaml_config", yaml_file_path);
+        std::cout<<yaml_file_path<<std::endl;
+         YAML::Node config = YAML::LoadFile(yaml_file_path);
+        int count = config["poses"].size();  // 获取数量
+    
+        snprintf(msg_data, sizeof(msg_data), "{ \"type\": \"uploadRoute\", \"data\" : [");
+         //解析yaml文件
+        for (int i = 0; i < count; ++i)
+        {
+            geometry_msgs::msg::Pose pose;
+            std::string pose_key = "pose_" + std::to_string(i + 1); 
+            pose.position.x = config["poses"][i][pose_key]["position_x"].as<double>();
+            pose.position.y = config["poses"][i][pose_key]["position_y"].as<double>();
+            pose.position.z = config["poses"][i][pose_key]["position_z"].as<double>();
+            pose.orientation.x = config["poses"][i][pose_key]["orientation_x"].as<double>();
+            pose.orientation.y = config["poses"][i][pose_key]["orientation_y"].as<double>();
+            pose.orientation.z = config["poses"][i][pose_key]["orientation_z"].as<double>();
+            pose.orientation.w = config["poses"][i][pose_key]["orientation_w"].as<double>();
+            //存入map
+            poses_map.insert({pose_key, pose});
+            //上报web服务器
+            
+            std::string str_count=std::to_string(i);
+            std::string poseName = "pose" + std::to_string(i + 1);
+            snprintf(temp_data, sizeof(temp_data), "{\"route\":\"%s\",\"routeName\":\"%s\"}", str_count.c_str(), poseName.c_str());
+            if (i < count - 1) {          
+                snprintf(msg_data + strlen(msg_data), sizeof(msg_data) - strlen(msg_data), "%s,", temp_data);
+            } else {
+                snprintf(msg_data + strlen(msg_data), sizeof(msg_data) - strlen(msg_data), "%s", temp_data);
+            }
+
+        }
+        snprintf(msg_data + strlen(msg_data), sizeof(msg_data) - strlen(msg_data), "]}");
+        std::cout<<msg_data<<std::endl;
+
         auto uploadRoute = std_msgs::msg::String();
         uploadRoute.data = msg_data;  // 将C字符串赋值给消息的data成员
         ws_publisher_->publish(uploadRoute);
+
+
+
+        geometry_msgs::msg::Pose pose;
+        std::string returnPoint_key = "returnPoint"; 
+        pose.position.x = config["returnPoint"]["position_x"].as<double>();
+        pose.position.y = config["returnPoint"]["position_y"].as<double>();
+        pose.position.z = config["returnPoint"]["position_z"].as<double>();
+        pose.orientation.x = config["returnPoint"]["orientation_x"].as<double>();
+        pose.orientation.y = config["returnPoint"]["orientation_y"].as<double>();
+        pose.orientation.z = config["returnPoint"]["orientation_z"].as<double>();
+        pose.orientation.w = config["returnPoint"]["orientation_w"].as<double>();
+
+        //char msg_data[256];
+        snprintf(msg_data, sizeof(msg_data),
+                "{ \"type\": \"uploadReturnPoint\", \"data\" : [{\"returnPoint\":\"%s\",\"returnPointName\":\"%s\"}]}",
+        "returnPoint",
+        "返回点");
+        std::cout<<msg_data<<std::endl;
+       
+        auto uploadReturnPoint = std_msgs::msg::String();
+        uploadReturnPoint.data = msg_data;  // 将C字符串赋值给消息的data成员
+        ws_publisher_->publish(uploadReturnPoint);
+
     }
 
 private:
@@ -700,8 +690,13 @@ private:
     rclcpp::Subscription<mycan_msgs::msg::Hwcan>::SharedPtr hwcan_subscription_;
     rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr sub_gps_cmd;
     rclcpp::Subscription<tier4_planning_msgs::msg::RouteState>::SharedPtr autoware_mode_cmd;
+
+
+
     net::io_context io_context_;
     websocket::stream<tcp::socket> ws_;
+
+
     std::atomic<bool> shutdown_requested_;
     std::mutex ws_mutex_;
     std::thread read_thread_;
@@ -716,6 +711,7 @@ private:
     int autoware_mode_msg;
     int offlineVideoReq;
     std::string rtmp_msg;
+    std::map<std::string, geometry_msgs::msg::Pose> poses_map;
 
 };
 
