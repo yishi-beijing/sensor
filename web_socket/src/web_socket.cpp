@@ -12,7 +12,6 @@
 #include <mutex>
 #include <map>
 #include <string>
-#include <proj.h>
 #include <yaml-cpp/yaml.h>
 
 
@@ -257,19 +256,21 @@ private:
     char msg_data[1024];
     int code=0;
     std::string message=" ok";
-    auto node = rclcpp::Node::make_shared("service_client_node");  // 确保 node 被正确声明和初始化
-    std::cout<<"sub : type :"<<type_value.c_str()<<std::endl;
+    // 确保 node 被正确声明和初始化
+    //std::cout<<"sub : type :"<<type_value.c_str()<<std::endl;
 
     if (type_value=="actionAutoReq")
     {
+         auto node = rclcpp::Node::make_shared("service_client_actionAutoReq_node"); 
         int data_value = json["data"];
         std_msgs::msg::Int32 work_data;
+       // std::cout<<"data_value :"<<data_value<<std::endl;
         if (data_value==1)
         {
             work_data.data=data_value;
             hw_work_publisher_->publish(work_data);
-            sleep(3);
-            auto client = node->create_client<autoware_adapi_v1_msgs::srv::ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
+           // sleep(3);
+            auto client = node->create_client<autoware_adapi_v1_msgs::srv::ChangeOperationMode>("api/operation_mode/change_to_autonomous");
 
     
             if (!client->service_is_ready()) {
@@ -326,10 +327,9 @@ private:
                 serialNumber,
                 code,
                 message.c_str());
-         // printf("%s\n", msg_data);
+          //  printf("%s\n", msg_data);
               auto reportWarn = std_msgs::msg::String();
               reportWarn.data = msg_data;  // 将C字符串赋值给消息的data成员
-               printf("pub :%s\n", msg_data);
               ws_publisher_->publish(reportWarn);
        
     }else if (type_value=="drivingModeReq")
@@ -371,7 +371,7 @@ private:
         message.c_str(),
         Vin.c_str(),
         serialNumber);
-        printf("pub :%s\n", msg_data);
+       // printf("pub :%s\n", msg_data);
         auto offlineVideoResp = std_msgs::msg::String();
         offlineVideoResp.data = msg_data;  // 将C字符串赋值给消息的data成员
         
@@ -391,13 +391,13 @@ private:
         serialNumber,
         code,
         message.c_str());
-        printf("pub :%s\n", msg_data);
+       // printf("pub :%s\n", msg_data);
         auto offlineVideoResp = std_msgs::msg::String();
         offlineVideoResp.data = msg_data;  // 将C字符串赋值给消息的data成员
 
     }
 
-      std::cout<<"over"<<std::endl;
+     // std::cout<<"over"<<std::endl;
     
     }
 
@@ -443,7 +443,7 @@ private:
         message.c_str());
         auto reportWarn = std_msgs::msg::String();
         reportWarn.data = msg_data;  // 将C字符串赋值给消息的data成员
-         printf("pub :%s\n", msg_data);
+       //  printf("pub :%s\n", msg_data);
         ws_publisher_->publish(reportWarn);
     }
 
@@ -454,7 +454,7 @@ private:
         if (result != 0) {
             RCLCPP_ERROR(this->get_logger(), "Failed to execute FFmpeg command");
         }
-        std::cout<<"over"<<std::endl;
+       // std::cout<<"over"<<std::endl;
     }
    
 
@@ -472,16 +472,12 @@ private:
         geometry_msgs::msg::PoseStamped pose;
         char time[48];
         std::string message=" ok";
-        auto node = rclcpp::Node::make_shared("service_client1_node");  // 确保 node 被正确声明和初始化
-        auto client = node->create_client<autoware_adapi_v1_msgs::srv::ChangeOperationMode>("/api/operation_mode/change_to_autonomous");
         std_msgs::msg::Int32 work_data;
 
 
-        //kaishirenwu
-        work_data.data=1;
-        hw_work_publisher_->publish(work_data);
-        sleep(3);
-
+        
+     //   work_data.data=1;
+    //    hw_work_publisher_->publish(work_data);   
         pose.header.frame_id="map";
         pose.pose.position.x=poses_map[route].position.x;
         pose.pose.position.y=poses_map[route].position.y;
@@ -491,8 +487,12 @@ private:
         pose.pose.orientation.z=poses_map[route].orientation.z;
         pose.pose.orientation.w=poses_map[route].orientation.w;
         planning_goal_publisher_->publish(pose);
+
         sleep(3);
-    
+
+
+        auto node = rclcpp::Node::make_shared("service_client_taskReq_node");  // 确保 node 被正确声明和初始化
+        auto client = node->create_client<autoware_adapi_v1_msgs::srv::ChangeOperationMode>("api/operation_mode/change_to_autonomous");
     
             if (!client->service_is_ready()) {
                  return;
@@ -511,19 +511,22 @@ private:
             
             }
 
-        sleep(3);
-        while(this->autoware_mode_msg!=6)
-        {
-        
-            if (this->hw_msg.can540.vehiclectrlmodefb==3)
-            {
-                return;
-            }
-            sleep(1);
-        }
 
-        work_data.data=2;
-        hw_work_publisher_->publish(work_data);
+        get_time(time);
+        snprintf(msg_data, sizeof(msg_data),
+                "{ \"type\": \"taskStartResp\", \"data\" :{ \"serialNumber\":\"%ld\",\"taskId\": \"%d\",\"startTime\": \"%s\",\"code\": \"%d\",\"message\": \"%s\"} }",
+        serialNumber,
+        taskId,
+        time,
+        code,
+        message.c_str());
+        //std::cout<<"msg_data : "<<msg_data<<std::endl;
+    //    printf("pub :%s\n", msg_data);
+        auto taskStartResp = std_msgs::msg::String();
+        taskStartResp.data = msg_data;  // 将C字符串赋值给消息的data成员
+        ws_publisher_->publish(taskStartResp);   
+        sleep(1);
+       // 任務結束
         get_time(time);
         snprintf(msg_data, sizeof(msg_data),
                 "{ \"type\": \"taskEndResp\", \"data\" :{ \"serialNumber\":\"%ld\",\"taskId\": \"%d\",\"endTime\": \"%s\",\"code\": \"%d\",\"message\": \"%s\",\"area\": \"1221.22\",\"powerConsumption\": \"1223.22\"} }",
@@ -532,7 +535,7 @@ private:
         time,
         code,
         message.c_str());
-         printf("pub :%s\n", msg_data);
+       // std::cout<<"msg_data : "<<msg_data<<std::endl;
         auto taskEndResp = std_msgs::msg::String();
         taskEndResp.data = msg_data;  // 将C字符串赋值给消息的data成员
         ws_publisher_->publish(taskEndResp);
@@ -574,7 +577,7 @@ private:
 
     void read_loop() {
         rclcpp::WallRate loop_rate(5);
-        std::cout<<"read_loop  :  "<<std::endl;
+        //std::cout<<"read_loop  :  "<<std::endl;
         while (rclcpp::ok()) {
             beast::flat_buffer buffer;
             try {
@@ -583,20 +586,21 @@ private:
                 }
                 std_msgs::msg::String msg;
                 msg.data = beast::buffers_to_string(buffer.data());
-                 std::cout<<"buffer  :  "<<msg.data.c_str()<<std::endl;
+                 //std::cout<<"buffer  :  "<<msg.data.c_str()<<std::endl;
                 publisher_->publish(msg);
+                std::cout<<"read_loop  :  "<<msg.data.c_str()<<std::endl;
             } catch (const std::exception& e) {
                 RCLCPP_ERROR(this->get_logger(), "Read error: %s", e.what());
-                std::cout<<"error   e"<<e.what()<<std::endl;
+                //std::cout<<"error   e"<<e.what()<<std::endl;
             }
-            std::cout<<"sleep  :  "<<std::endl;
+            //std::cout<<"sleep  :  "<<std::endl;
            loop_rate.sleep();
 
         }
     }
 
     void send_data(const std_msgs::msg::String::SharedPtr msg) {
-       // std::cout<<"send_data"<<std::endl;
+       
         std::lock_guard<std::mutex> lock(ws_mutex);
         ws_.async_write(net::buffer(msg->data),
             [this](beast::error_code ec, std::size_t /*bytes_transferred*/) {
@@ -604,6 +608,7 @@ private:
                     RCLCPP_ERROR(this->get_logger(), "Send error: %s", ec.message().c_str());
                 }
             });
+         std::cout<<"send_data  : "<<msg->data<<std::endl;
     }
     
     void websocket_init()
@@ -624,6 +629,7 @@ private:
         {
             geometry_msgs::msg::Pose pose;
             std::string pose_key = "pose_" + std::to_string(i + 1); 
+           // std::cout<<"pose_key ="<<pose_key<<std::endl;
             pose.position.x = config["poses"][i][pose_key]["position_x"].as<double>();
             pose.position.y = config["poses"][i][pose_key]["position_y"].as<double>();
             pose.position.z = config["poses"][i][pose_key]["position_z"].as<double>();
@@ -632,7 +638,7 @@ private:
             pose.orientation.z = config["poses"][i][pose_key]["orientation_z"].as<double>();
             pose.orientation.w = config["poses"][i][pose_key]["orientation_w"].as<double>();
             //存入map
-            poses_map.insert({pose_key, pose});
+            poses_map.insert({std::to_string(i), pose});
             //上报web服务器
             
             std::string str_count=std::to_string(i);
@@ -646,7 +652,7 @@ private:
 
         }
         snprintf(msg_data + strlen(msg_data), sizeof(msg_data) - strlen(msg_data), "]}");
-        std::cout<<msg_data<<std::endl;
+       // std::cout<<msg_data<<std::endl;
 
         auto uploadRoute = std_msgs::msg::String();
         uploadRoute.data = msg_data;  // 将C字符串赋值给消息的data成员
@@ -663,17 +669,37 @@ private:
         pose.orientation.y = config["returnPoint"]["orientation_y"].as<double>();
         pose.orientation.z = config["returnPoint"]["orientation_z"].as<double>();
         pose.orientation.w = config["returnPoint"]["orientation_w"].as<double>();
-
+        poses_map.insert({"returnPoint", pose});
         //char msg_data[256];
         snprintf(msg_data, sizeof(msg_data),
                 "{ \"type\": \"uploadReturnPoint\", \"data\" : [{\"returnPoint\":\"%s\",\"returnPointName\":\"%s\"}]}",
         "returnPoint",
         "返回点");
-        std::cout<<msg_data<<std::endl;
+       // std::cout<<msg_data<<std::endl;
        
         auto uploadReturnPoint = std_msgs::msg::String();
         uploadReturnPoint.data = msg_data;  // 将C字符串赋值给消息的data成员
         ws_publisher_->publish(uploadReturnPoint);
+
+
+        for (const auto& entry : poses_map)
+    {
+        std::cout << "Pose Key: " << entry.first << std::endl;
+        const geometry_msgs::msg::Pose& pose = entry.second;
+
+        // 输出位置信息
+        std::cout << "  Position: ("
+                  << pose.position.x << ", "
+                  << pose.position.y << ", "
+                  << pose.position.z << ")" << std::endl;
+
+        // 输出方向信息
+        std::cout << "  Orientation: ("
+                  << pose.orientation.x << ", "
+                  << pose.orientation.y << ", "
+                  << pose.orientation.z << ", "
+                  << pose.orientation.w << ")" << std::endl;
+    }
 
     }
 
